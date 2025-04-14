@@ -1,1 +1,6 @@
+# Ignore all PNG files except those in output/figures
 *.png
+
+# Ignore macOS system files
+.DS_Store
+**/.DS_Store
