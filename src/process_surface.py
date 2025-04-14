@@ -12,7 +12,7 @@ from typing import Optional, Dict
 # Add parent directory to path to import local modules
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.data_loader import load_raw_surface
+from src.data_loader import load_raw_surface, get_surface_info
 from src.spectral import SpectralCalculator
 from src.emission import PlanetarySystem, EmissionCalculator, calculate_planet_star_contrast
 from src.plotting import plot_raw_spectra, plot_emission_spectrum, plot_temperature_map
@@ -52,6 +52,13 @@ def process_surface(surface_id: str = '97_',
         # 1. Load surface data
         logging.info(f"Loading surface data for {surface_id}...")
         surface = load_raw_surface(surface_id, frankenspectrum)
+        
+        # Get surface info for full filename
+        surface_info = get_surface_info(surface_id)
+        if surface_info['is_frankenspectrum'] or frankenspectrum:
+            full_name = surface_info['data_name']
+        else:
+            full_name = f"{surface_info['sw_name']}_{surface_info['lw_name']}"
         
         # 2. Setup planetary system with database parameters
         logging.info(f"Setting up planetary system for {planet_name}...")
@@ -93,10 +100,28 @@ def process_surface(surface_id: str = '97_',
         # 4. Generate plots
         logging.info("Generating plots...")
         
-        # Raw spectrum only
-        fig_path = Path(FIGURE_DIR) / f'{surface_id}_raw_spectrum.png'
-        plot_raw_spectra(surface, save_path=str(fig_path))
-        logging.info(f"Raw spectrum plot saved to {fig_path}")
+        # Create figures directory if it doesn't exist
+        Path(FIGURE_DIR).mkdir(parents=True, exist_ok=True)
+        
+        # Raw spectrum
+        raw_spectrum_path = Path(FIGURE_DIR) / f'{full_name}_raw_spectrum.png'
+        plot_raw_spectra(surface, save_path=str(raw_spectrum_path))
+        logging.info(f"Raw spectrum plot saved to {raw_spectrum_path}")
+        
+        # Emission spectrum and contrast
+        emission_path = Path(FIGURE_DIR) / f'{full_name}_emission_spectrum.png'
+        plot_emission_spectrum(emission_result, contrast, save_path=str(emission_path))
+        logging.info(f"Emission spectrum plot saved to {emission_path}")
+        
+        # Temperature map
+        temp_map_path = Path(FIGURE_DIR) / f'{full_name}_temperature_map.png'
+        plot_temperature_map(
+            emission_calc.longitudes,
+            emission_calc.latitudes,
+            emission_calc.temperatures,
+            save_path=str(temp_map_path)
+        )
+        logging.info(f"Temperature map plot saved to {temp_map_path}")
         
         return {
             'emission_result': emission_result,
@@ -112,7 +137,6 @@ def process_surface(surface_id: str = '97_',
 def main():
     """Main execution function."""
     try:
-        Path(FIGURE_DIR).mkdir(parents=True, exist_ok=True)
         results = process_surface()
         if results is None:
             sys.exit(1)

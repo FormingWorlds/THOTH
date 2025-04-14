@@ -138,7 +138,7 @@ def plot_emission_spectrum(emission_result: Dict[str, np.ndarray],
     ax1.set_xlabel('Wavelength (μm)')
     ax1.set_ylabel('Spectral Flux (W/m²/nm)')
     ax1.set_xlim(1, 20)  # Set wavelength range to 1-20 microns
-    ax1.set_yscale('log')
+    # ax1.set_yscale('log')
     ax1.legend()
     ax1.grid(True, alpha=0.3)
     
