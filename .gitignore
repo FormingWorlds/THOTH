@@ -4,3 +4,9 @@
 # Ignore macOS system files
 .DS_Store
 **/.DS_Store
+
+# Ignore files in virtual environment (venv) directory
+venv/
+
+# Ignore __pycache__ directory
+src/__pycache__/
