@@ -10,3 +10,6 @@ venv/
 
 # Ignore __pycache__ directory
 src/__pycache__/
+
+# Ignore output
+output/
