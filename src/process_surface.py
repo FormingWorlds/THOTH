@@ -109,12 +109,12 @@ def process_surface(surface_id: str = '97_',
 
         # Raw spectrum
         raw_spectrum_path = Path(FIGURE_DIR) / f'{full_name}_raw_spectrum.png'
-        plot_raw_spectra(surface, save_path=str(raw_spectrum_path))
+        plot_raw_spectra(surface, show = False, save_path=str(raw_spectrum_path))
         logging.info(f"Raw spectrum plot saved to {raw_spectrum_path}")
         
         # Emission spectrum and contrast
         emission_path = Path(FIGURE_DIR) / f'{full_name}_emission_spectrum.png'
-        plot_emission_spectrum(emission_result, contrast, save_path=str(emission_path))
+        plot_emission_spectrum(emission_result, contrast, show = False, save_path=str(emission_path))
         logging.info(f"Emission spectrum plot saved to {emission_path}")
         
         # Temperature map
@@ -122,7 +122,8 @@ def process_surface(surface_id: str = '97_',
         plot_temperature_map(
             emission_calc.longitudes,
             emission_calc.latitudes,
-            emission_calc.temperatures,
+            emission_calc.temperatures, 
+            show = False,
             save_path=str(temp_map_path)
         )
         logging.info(f"Temperature map plot saved to {temp_map_path}")
