@@ -8,6 +8,7 @@ import logging
 import traceback
 import pandas as pd
 from typing import Optional, Dict
+import argparse
 
 # Add parent directory to path to import local modules
 sys.path.append(str(Path(__file__).parent.parent))
@@ -57,8 +58,10 @@ def process_surface(surface_id: str = '97_',
         surface_info = get_surface_info(surface_id)
         if surface_info['is_frankenspectrum'] or frankenspectrum:
             full_name = surface_info['data_name']
+            short_name = surface_info['data_name'].split('_')[0] + '_' + surface_info['data_name'].split('_')[1]
         else:
             full_name = f"{surface_info['sw_name']}_{surface_info['lw_name']}"
+            short_name = surface_info['sw_name'].split('_')[0] + '_' + surface_info['sw_name'].split('_')[1]
         
         # 2. Setup planetary system with database parameters
         logging.info(f"Setting up planetary system for {planet_name}...")
@@ -100,9 +103,10 @@ def process_surface(surface_id: str = '97_',
         # 4. Generate plots
         logging.info("Generating plots...")
         
-        # Create figures directory if it doesn't exist
-        Path(FIGURE_DIR).mkdir(parents=True, exist_ok=True)
-        
+        # Create figures directory for each surface if it doesn't exist
+        surface_figs_dir = Path(FIGURE_DIR)/planet_name.replace(" ", "_")/f"{short_name}"
+        surface_figs_dir.mkdir(parents=True, exist_ok=True)       
+
         # Raw spectrum
         raw_spectrum_path = Path(FIGURE_DIR) / f'{full_name}_raw_spectrum.png'
         plot_raw_spectra(surface, save_path=str(raw_spectrum_path))
@@ -134,16 +138,81 @@ def process_surface(surface_id: str = '97_',
         logging.error(traceback.format_exc())
         return None
 
+def process_surfaces(surface_ids: list,
+                     frankenspectrum: bool = False,
+                     planet_name: str = 'TRAPPIST-1 b'):
+    """Process multiple surfaces and save results to output/processed/"""
+
+    output_dir = Path("output") / "processed" / planet_name.replace(" ", "_")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    for raw_surface in surface_ids:
+        if ':' in raw_surface:
+            surface_id, flag = raw_surface.split(":")
+            frankenspectrum = flag == "frankenspectrum"
+        else:
+            surface_id = raw_surface
+            frankenspectrum = False
+
+        logging.info(f"\n--- Processing surface: {surface_id} | Frankenspectrum: {frankenspectrum} ---")
+        result = process_surface(surface_id, frankenspectrum, planet_name)
+
+        if result is not None:
+            output_data = {
+                "wavelength": result['emission_result']['wavelength'].tolist(),
+                "thermal_emission": result['emission_result']['thermal_emission'].tolist(),
+                "reflected_light": result['emission_result']['reflected_light'].tolist(),
+                "total_emission": result['emission_result']['total_emission'].tolist(),
+                "contrast": result['contrast'].tolist(),
+                "temperatures": result['temperatures'].tolist()
+            }
+            output_path = output_dir / f"{surface_id.strip('_')}_result.json"
+            try:
+                with open(output_path, "w") as f:
+                    import json
+                    json.dump(output_data, f, indent=2)
+                logging.info(f"Results saved to {output_path}")
+            except Exception as e:
+                logging.error(f"Failed to save results for {surface_id}: {e}")
+        else:
+            logging.warning(f"Skipping saving for surface {surface_id} due to errors.")
+
 def main():
     """Main execution function."""
-    try:
-        results = process_surface()
-        if results is None:
+    
+    parser = argparse.ArgumentParser(description="Process emission spectra for multiple surfaces.")
+    parser.add_argument(
+        "-s", "--surfaces",
+        nargs="+",
+        required=True,
+        help="List of surface IDs. Add ':frankenspectrum' if needed (e.g. 96_ 97_ 98_:frankenspectrum), or 'all' to process everything in data/raw"
+    )
+    parser.add_argument(
+        "-p", "--planet",
+        default="TRAPPIST-1 b",
+        help="Planet name to use"
+    )
+    args = parser.parse_args()
+
+    surface_list = args.surfaces
+
+    if len(surface_list) == 1 and surface_list[0].lower() == "all":
+        raw_dir = Path("data") / "raw"
+        if not raw_dir.exists():
+            logging.error(f"Raw directory not found: {raw_dir}")
             sys.exit(1)
-    except Exception as e:
-        logging.error(f"Fatal error:")
-        logging.error(traceback.format_exc())
-        sys.exit(1)
+
+        tab_files = list(raw_dir.glob("*.tab"))
+        
+        # Get surface IDs by splitting on '_' and taking the first part
+        surface_ids = sorted(set(f.name.split('_')[0] + '_' for f in tab_files))
+        
+        logging.info(f"Found {len(surface_ids)} surface IDs: {surface_ids}")
+    else:
+        surface_ids = surface_list
+
+    process_surfaces(surface_ids, planet_name=args.planet)
+
 
 if __name__ == "__main__":
     main() 
