@@ -101,9 +101,18 @@ def plot_emission_spectrum(emission_result: Dict[str, np.ndarray],
         matplotlib axes object
     """
     if ax is None:
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), height_ratios=[2, 1])
+        fig = plt.figure(figsize=(10, 10))
+        gs = fig.add_gridspec(3, 1, height_ratios=[3, 1, 1])
+        
+        ax1 = fig.add_subplot(gs[0])
+        ax2 = fig.add_subplot(gs[1], sharex=ax1)
+        ax3 = fig.add_subplot(gs[2])
+        
+        # Hide x-axis labels on top plot (ax1) only
+        plt.setp(ax1.get_xticklabels(), visible=False)
+
     else:
-        ax1, ax2 = ax
+        ax1, ax2, ax3 = ax
     
     # Get wavelength in microns
     wavelength = emission_result['wavelength'] * 1e-3
@@ -137,7 +146,6 @@ def plot_emission_spectrum(emission_result: Dict[str, np.ndarray],
         ax1.plot(wavelength, simple_reflection * scale_factor,
                 label='Simple Reflection (A=0.5)', color='cyan', ls=':')
     
-    ax1.set_xlabel('Wavelength (μm)')
     ax1.set_ylabel('Spectral Flux (W/m²/nm)')
     ax1.set_xlim(1, 20)  # Set wavelength range to 1-20 microns
     # ax1.set_yscale('log')
@@ -152,6 +160,14 @@ def plot_emission_spectrum(emission_result: Dict[str, np.ndarray],
     ax2.set_yscale('log')
     ax2.grid(True, alpha=0.3)
     
+    # Plot contrast zoomed-in (to compare with Manfield 2024)
+    ax3.plot(wavelength, contrast, 'k-')
+    ax3.set_xlabel('Wavelength (μm)')
+    ax3.set_ylabel('Fp/F* (ppm)')
+    ax3.set_xlim(5, 12)  # Set wavelength range to 1-20 microns
+    ax3.set_ylim(0, 400)  # Set wavelength range to 1-20 microns
+    ax3.grid(True, alpha=0.3)
+    
     plt.tight_layout()
     
     if save_path:
@@ -162,7 +178,7 @@ def plot_emission_spectrum(emission_result: Dict[str, np.ndarray],
     else:
         plt.close()
         
-    return (ax1, ax2)
+    return (ax1, ax2, ax3)
 
 def plot_temperature_map(longitudes: np.ndarray,
                         latitudes: np.ndarray,
