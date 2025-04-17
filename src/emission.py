@@ -213,7 +213,7 @@ class EmissionCalculator:
             return x0
             
     def calculate_emission(self, surface: SurfaceData, 
-                         include_reflection: bool = True) -> Dict[str, np.ndarray]:
+                         include_reflection: bool = True, show_plot: bool = False) -> Dict[str, np.ndarray]:
         """Calculate emission spectrum.
         
         Args:
@@ -445,7 +445,10 @@ class EmissionCalculator:
                       transform=axes[1,1].transAxes, verticalalignment='top')
         
         plt.tight_layout()
-        plt.show()
+        if show_plot:
+            plt.show()
+        else:
+            plt.close(fig)
         
         # Return observed quantities for contrast calculation
         return {

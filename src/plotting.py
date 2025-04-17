@@ -77,6 +77,8 @@ def plot_raw_spectra(surface: SurfaceData,
     
     if show:
         plt.show()
+    else:
+        plt.close()
         
     return ax
 
@@ -157,6 +159,8 @@ def plot_emission_spectrum(emission_result: Dict[str, np.ndarray],
     
     if show:
         plt.show()
+    else:
+        plt.close()
         
     return (ax1, ax2)
 
@@ -204,5 +208,7 @@ def plot_temperature_map(longitudes: np.ndarray,
     
     if show:
         plt.show()
+    else:
+        plt.close()
         
     return ax 
