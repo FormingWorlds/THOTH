@@ -41,13 +41,14 @@ def plot_raw_spectra(surface: SurfaceData,
             ax1.set_title(f'Raw SW/LW Data: {surface.surface_id}')
             ax1.grid(True, alpha=0.3)
             ax1.legend()
+
+            wavelength_microns = surface.wavelength / 1e3 # From nm to microns for combined spectrum
         else:
             # Single plot for frankenspectrum
             fig, ax = plt.subplots(figsize=(12, 6))
+            wavelength_microns = surface.wavelength  # Already in microns for frankenspectrum
     
     # Plot spectral data
-    # For frankenspectrum, wavelengths are in microns, so multiply by 1e3 to get nm
-    wavelength_microns = surface.wavelength  # Already in microns for frankenspectrum
     
     # Plot the data
     ax.plot(wavelength_microns, surface.reflectance, 'k-', label='Spectrum', linewidth=1)
